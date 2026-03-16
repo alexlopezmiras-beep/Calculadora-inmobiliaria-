@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Inmo Calc"/>
+<meta name="theme-color" content="#1a1209"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<title>Calculadora Inmobiliaria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#f7f2eb;
+    --surface:#ffffff;
+    --dark:#1a1209;
+    --gold:#c8a96e;
+    --gold2:#e8c97e;
+    --text:#1a1209;
+    --muted:#8a7a6a;
+    --border:#e5ddd2;
+    --radius:16px;
+    --ff-display:'Cormorant Garamond',serif;
+    --ff-body:'Outfit',sans-serif;
+  }
+  html,body{height:100%;overflow:hidden;background:var(--dark)}
+  body{font-family:var(--ff-body);display:flex;flex-direction:column;max-width:480px;margin:0 auto;background:var(--bg)}
+
+  /* HEADER */
+  .header{
+    background:var(--dark);
+    padding: env(safe-area-inset-top, 44px) 20px 16px;
+    padding-top: max(env(safe-area-inset-top), 44px);
+    flex-shrink:0;
+  }
+  .header-inner{display:flex;align-items:center;gap:12px}
+  .header-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .header h1{font-family:var(--ff-display);color:#fff;font-size:22px;font-weight:700;line-height:1.1}
+  .header p{color:var(--gold);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;margin-top:2px}
+
+  /* TABS */
+  .tabs{background:var(--dark);padding:0 16px 12px;display:flex;gap:6px;flex-shrink:0}
+  .tab{flex:1;padding:9px 4px;border:none;border-radius:10px;font-family:var(--ff-body);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.03em;transition:all .2s;color:var(--muted);background:rgba(255,255,255,0.07)}
+  .tab.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--dark)}
+
+  /* SCROLL AREA */
+  .scroll{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:calc(env(safe-area-inset-bottom) + 20px)}
+  .scroll::-webkit-scrollbar{display:none}
+
+  /* CARDS */
+  .card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid var(--border);box-shadow:0 2px 16px rgba(0,0,0,0.04)}
+  .card-title{font-family:var(--ff-display);font-size:17px;color:var(--text);margin-bottom:16px;font-weight:700}
+
+  /* SLIDER ROW */
+  .slider-row{margin-bottom:16px}
+  .slider-labels{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .slider-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:500}
+  .slider-value{font-family:var(--ff-display);font-size:18px;font-weight:700;color:var(--text)}
+  .track{position:relative;height:5px;background:var(--border);border-radius:3px;margin-bottom:4px}
+  .track-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:3px;transition:width .1s}
+  .track input[type=range]{position:absolute;inset:0;width:100%;height:24px;top:-10px;opacity:0;cursor:pointer;z-index:2}
+  .slider-minmax{display:flex;justify-content:space-between}
+  .slider-minmax span{font-size:10px;color:#c0b0a0}
+
+  /* RESULTS GRID */
+  .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .metric{background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--border)}
+  .metric.highlight{background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;box-shadow:0 6px 24px rgba(200,169,110,0.35)}
+  .metric.full{grid-column:1/-1}
+  .metric-label{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;font-weight:500}
+  .metric.highlight .metric-label{color:rgba(26,18,9,0.65)}
+  .metric-value{font-family:var(--ff-display);font-size:22px;font-weight:700;color:var(--text);line-height:1}
+  .metric.highlight .metric-value{color:var(--dark)}
+  .metric-sub{font-size:11px;color:var(--muted);margin-top:4px}
+  .metric.highlight .metric-sub{color:rgba(26,18,9,0.6)}
+
+  /* TABLE */
+  .breakdown{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border)}
+  .breakdown-title{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:12px;font-weight:600}
+  .breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+  .breakdown-row:last-child{border-bottom:none}
+  .breakdown-row span:first-child{font-size:13px;color:#5a4a3a}
+  .breakdown-row span:last-child{font-size:13px;font-weight:700;color:var(--text)}
+
+  /* TOGGLE */
+  .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;margin-bottom:8px}
+  .toggle-label{font-size:13px;font-weight:600;color:var(--text)}
+  .toggle-btn{width:50px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .3s}
+  .toggle-thumb{position:absolute;top:4px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .3s;box-shadow:0 1px 4px rgba(0,0,0,0.25)}
+
+  /* VIABILITY BAR */
+  .viability{background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border)}
+  .viability-bar-bg{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin:8px 0 4px}
+  .viability-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+  .viability-result{background:var(--bg);border-radius:10px;padding:12px;text-align:center;margin-top:12px}
+  .viability-result .v-status{font-family:var(--ff-display);font-size:18px;font-weight:700;color:var(--text)}
+  .viability-result .v-desc{font-size:12px;color:var(--muted);margin-top:4px}
+
+  /* PLAZO TABLE */
+  .plazo-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:4px}
+  .plazo-row.current{background:#fdf8f0;border:1px solid var(--gold2)}
+  .plazo-badge{font-size:10px;background:var(--gold2);color:var(--dark);padding:2px 7px;border-radius:4px;font-weight:600;margin-left:6px}
+
+  .note{text-align:center;font-size:11px;color:#c0b0a0;padding:8px 0}
+
+  .section-divider{height:1px;background:var(--border);margin:4px 0 12px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-icon">🏛</div>
+    <div>
+      <h1>Calculadora Inmobiliaria</h1>
+      <p>Valoración · Rentabilidad · Hipoteca</p>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('compra')">💰 Compra-Venta</button>
+  <button class="tab" onclick="showTab('alquiler')">🏠 Alquiler</button>
+  <button class="tab" onclick="showTab('hipoteca')">🏦 Hipoteca</button>
+</div>
+
+<!-- ═══════════ COMPRA-VENTA ═══════════ -->
+<div id="tab-compra" class="scroll">
+  <div class="card">
+    <div class="card-title">Inversión</div>
+    <div id="sliders-compra"></div>
+  </div>
+  <div class="results-grid" id="results-compra"></div>
+  <div class="breakdown" id="breakdown-compra"></div>
+  <div class="note">Cálculos orientativos. No constituyen asesoramiento financiero.</div>
+</div>
+
+<!-- ═══════════ ALQUILER ═══════════ -->
+<div id="tab-alquiler" class="scroll" style="display:none">
+  <div class="card">
+    <div class="card-title">Datos del Inmueble</div>
+    <div id="sliders-alquiler"></div>
+    <div class="section-divider"></div>
+    <div class="toggle-row">
+      <span class="toggle-label">¿Con financiación hipotecaria?</span>
+      <button class="toggle-btn" id="fin-toggle" onclick="toggleFinanciacion()" style="background:#e5ddd2">
+        <div class="toggle-thumb" id="fin-thumb" style="left:4px"></div>
+      </button>
+    </div>
+    <div id="sliders-financiacion" style="display:none"></div>
+  </div>
+  <div class="results-grid" id="results-alquiler"></div>
+  <div class="breakdown" id="breakdown-alquiler" style="display:none"></div>
+  <div class="note">Cálculos orientativos. No constituyen asesoramiento financiero.</div>
+</div>
+
+<!-- ═══════════ HIPOTECA ═══════════ -->
+<div id="tab-hipoteca" class="scroll" style="display:none">
+  <div class="card">
+    <div class="card-title">Datos de la Hipoteca</div>
+    <div id="sliders-hipoteca"></div>
+    <div class="section-divider"></div>
+    <div id="sliders-ingresos"></div>
+  </div>
+  <div class="results-grid" id="results-hipoteca"></div>
+  <div class="viability" id="viability-box"></div>
+  <div class="breakdown" id="breakdown-plazo"></div>
+  <div class="note">Cálculos orientativos. No constituyen asesoramiento financiero.</div>
+</div>
+
+<script>
+// ── STATE ──
+const S = {
+  // Compra-venta
+  precioCompra: 200000, reforma: 15000, gastosCompra: 10,
+  precioVenta: 260000, gastosVenta: 5,
+  // Alquiler
+  precioAlquiler: 200000, rentaMensual: 900, gastosAnuales: 2000,
+  ocupacion: 95, financiado: false,
+  entrada: 20, tipoInteres: 3.5, plazoHipoteca: 25,
+  // Hipoteca
+  precioHipoteca: 200000, entradaHip: 20,
+  tipoHip: 3.5, plazoHip: 25, ingresos: 3000
+};
+
+// ── FORMATTERS ──
+const eur = n => new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+const pct = n => n.toFixed(2) + '%';
+
+// ── SLIDER BUILDER ──
+function buildSlider(container, id, label, min, max, step, fmt) {
+  const wrap = document.createElement('div');
+  wrap.className = 'slider-row';
+  wrap.innerHTML = `
+    <div class="slider-labels">
+      <span class="slider-label">${label}</span>
+      <span class="slider-value" id="val-${id}">${fmt(S[id])}</span>
+    </div>
+    <div class="track" id="track-${id}">
+      <div class="track-fill" id="fill-${id}" style="width:${pctPos(S[id],min,max)}%"></div>
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${S[id]}"
+        oninput="updateSlider('${id}',this.value,'${fmt.name||'eur'}',${min},${max})"/>
+    </div>
+    <div class="slider-minmax"><span>${fmt(min)}</span><span>${fmt(max)}</span></div>
+  `;
+  container.appendChild(wrap);
+}
+
+function pctPos(v,min,max){return ((v-min)/(max-min))*100}
+
+const fmts = {
+  eur: v=>eur(v),
+  pct: v=>v+'%',
+  pct1: v=>v.toFixed(1)+'%',
+  anos: v=>v+' años'
+};
+
+function updateSlider(id, val, fmtName, min, max) {
+  S[id] = Number(val);
+  document.getElementById('val-'+id).textContent = fmts[fmtName](S[id]);
+  document.getElementById('fill-'+id).style.width = pctPos(S[id],min,max)+'%';
+  recalc();
+}
+
+// ── RENDER SLIDERS ──
+function renderSliders() {
+  const c = document.getElementById('sliders-compra');
+  c.innerHTML = '';
+  [
+    ['precioCompra','Precio de Compra',50000,800000,5000,'eur'],
+    ['reforma','Coste de Reforma',0,100000,1000,'eur'],
+    ['gastosCompra','Gastos de Compra (ITP+notaría)',6,15,0.5,'pct'],
+    ['precioVenta','Precio de Venta',50000,1000000,5000,'eur'],
+    ['gastosVenta','Gastos de Venta (agencia+impuestos)',2,10,0.5,'pct'],
+  ].forEach(([id,lbl,mn,mx,st,fm])=>buildSlider(c,id,lbl,mn,mx,st,fmts[fm]));
+
+  const a = document.getElementById('sliders-alquiler');
+  a.innerHTML = '';
+  [
+    ['precioAlquiler','Precio de Compra',50000,800000,5000,'eur'],
+    ['rentaMensual','Renta Mensual',300,5000,50,'eur'],
+    ['gastosAnuales','Gastos Anuales (IBI+comunidad)',500,8000,100,'eur'],
+    ['ocupacion','Tasa de Ocupación',50,100,1,'pct'],
+  ].forEach(([id,lbl,mn,mx,st,fm])=>buildSlider(a,id,lbl,mn,mx,st,fmts[fm]));
+
+  const fin = document.getElementById('sliders-financiacion');
+  fin.innerHTML = '';
+  [
+    ['entrada','Entrada',10,40,5,'pct'],
+    ['tipoInteres','Tipo de Interés TIN',0.5,7,0.1,'pct1'],
+    ['plazoHipoteca','Plazo',10,30,5,'anos'],
+  ].forEach(([id,lbl,mn,mx,st,fm])=>buildSlider(fin,id,lbl,mn,mx,st,fmts[fm]));
+
+  const h = document.getElementById('sliders-hipoteca');
+  h.innerHTML = '';
+  [
+    ['precioHipoteca','Precio del Inmueble',50000,800000,5000,'eur'],
+    ['entradaHip','Entrada',5,50,5,'pct'],
+    ['tipoHip','Tipo de Interés TIN',0.5,8,0.1,'pct1'],
+    ['plazoHip','Plazo',5,30,5,'anos'],
+  ].forEach(([id,lbl,mn,mx,st,fm])=>buildSlider(h,id,lbl,mn,mx,st,fmts[fm]));
+
+  const ing = document.getElementById('sliders-ingresos');
+  ing.innerHTML = '';
+  buildSlider(ing,'ingresos','Ingresos Netos Mensuales',1000,10000,100,fmts['eur']);
+}
+
+// ── METRIC CARD HTML ──
+function metricCard(label,value,sub,highlight,full){
+  return `<div class="metric${highlight?' highlight':''}${full?' full':''}">
+    <div class="metric-label">${label}</div>
+    <div class="metric-value">${value}</div>
+    ${sub?`<div class="metric-sub">${sub}</div>`:''}
+  </div>`;
+}
+
+// ── RECALC ──
+function recalc() {
+  // COMPRA-VENTA
+  const totalInv = S.precioCompra + S.reforma + S.precioCompra*(S.gastosCompra/100);
+  const netVenta = S.precioVenta*(1-S.gastosVenta/100);
+  const beneficio = netVenta - totalInv;
+  const roi = (beneficio/totalInv)*100;
+  const plusv = ((S.precioVenta-S.precioCompra)/S.precioCompra)*100;
+
+  document.getElementById('results-compra').innerHTML =
+    metricCard('Total Invertido',eur(totalInv),'Compra + reforma + gastos')+
+    metricCard('Ingreso Neto Venta',eur(netVenta),'Tras gastos de venta')+
+    metricCard('Beneficio Neto',(beneficio>=0?'':'-')+eur(Math.abs(beneficio)),`Plusvalía nominal: ${pct(plusv)}`,beneficio>0,'full')+
+    metricCard('ROI',pct(roi),'Retorno sobre inversión')+
+    metricCard('Plusvalía',pct(plusv),'Revalorización');
+
+  document.getElementById('breakdown-compra').innerHTML = `
+    <div class="breakdown-title">Desglose de Costes</div>
+    ${[
+      ['Precio de compra', S.precioCompra],
+      ['Reforma', S.reforma],
+      [`Gastos compra (${S.gastosCompra}%)`, S.precioCompra*(S.gastosCompra/100)],
+      [`Gastos venta (${S.gastosVenta}%)`, S.precioVenta*(S.gastosVenta/100)],
+    ].map(([l,v])=>`<div class="breakdown-row"><span>${l}</span><span>${eur(v)}</span></div>`).join('')}
+  `;
+
+  // ALQUILER
+  const rentaAnual = S.rentaMensual*12*(S.ocupacion/100);
+  const noi = rentaAnual - S.gastosAnuales;
+  const yBruto = (S.rentaMensual*12/S.precioAlquiler)*100;
+  const yNeto = (noi/S.precioAlquiler)*100;
+  const capProp = S.precioAlquiler*(S.entrada/100);
+  const capPrest = S.precioAlquiler*(1-S.entrada/100);
+  const r = S.tipoInteres/100/12;
+  const n = S.plazoHipoteca*12;
+  const cuota = S.financiado ? (capPrest*r)/(1-Math.pow(1+r,-n)) : 0;
+  const cfMes = S.rentaMensual*(S.ocupacion/100) - cuota - S.gastosAnuales/12;
+  const cfAnual = cfMes*12;
+  const coc = S.financiado ? (cfAnual/capProp)*100 : yNeto;
+  const pb = cfAnual>0 ? (S.financiado?capProp:S.precioAlquiler)/cfAnual : Infinity;
+
+  document.getElementById('results-alquiler').innerHTML =
+    metricCard('Yield Bruto',pct(yBruto),'Sobre precio de compra')+
+    metricCard('Yield Neto',pct(yNeto),'Tras gastos operativos')+
+    metricCard('Cash-Flow Mensual',eur(cfMes),`Anual: ${eur(cfAnual)}`,cfMes>0,'full')+
+    metricCard('CoC Return',pct(coc),'Retorno capital propio')+
+    metricCard('Payback',pb===Infinity?'∞':`${pb.toFixed(1)} años`,'Recuperación inversión');
+
+  const bdAlq = document.getElementById('breakdown-alquiler');
+  if(S.financiado){
+    bdAlq.style.display='block';
+    bdAlq.innerHTML = `
+      <div class="breakdown-title">Estructura Financiera</div>
+      ${[
+        ['Capital propio (entrada)', capProp],
+        ['Capital prestado', capPrest],
+        ['Cuota hipoteca/mes', cuota],
+        ['Renta neta/mes', S.rentaMensual*(S.ocupacion/100)],
+      ].map(([l,v])=>`<div class="breakdown-row"><span>${l}</span><span>${eur(v)}</span></div>`).join('')}
+    `;
+  } else {
+    bdAlq.style.display='none';
+  }
+
+  // HIPOTECA
+  const prestamo = S.precioHipoteca*(1-S.entradaHip/100);
+  const entradaAbs = S.precioHipoteca*(S.entradaHip/100);
+  const rh = S.tipoHip/100/12;
+  const nh = S.plazoHip*12;
+  const cuotaH = (prestamo*rh)/(1-Math.pow(1+rh,-nh));
+  const totalPag = cuotaH*nh;
+  const totalInt = totalPag-prestamo;
+  const esfuerzo = (cuotaH/S.ingresos)*100;
+  const viable = esfuerzo<=30 ? '✅ Viable' : esfuerzo<=40 ? '⚠️ Ajustado' : '❌ Alto riesgo';
+  const vDesc = esfuerzo<=30 ? 'Cuota dentro del rango recomendado por los bancos'
+    : esfuerzo<=40 ? 'Los bancos suelen aprobar hasta el 40% del ingreso'
+    : 'La cuota supera el 40% de tus ingresos. Riesgo de denegación.';
+  const barColor = esfuerzo>40 ? '#c0392b' : esfuerzo>30 ? '#e67e22' : 'linear-gradient(90deg,#c8a96e,#e8c97e)';
+
+  document.getElementById('results-hipoteca').innerHTML =
+    metricCard('Cuota Mensual',eur(cuotaH),`${eur(cuotaH*12)} / año`,true,'full')+
+    metricCard('Capital Prestado',eur(prestamo),`Entrada: ${eur(entradaAbs)}`)+
+    metricCard('Total a Pagar',eur(totalPag),`Intereses: ${eur(totalInt)}`);
+
+  document.getElementById('viability-box').innerHTML = `
+    <div class="breakdown-title">Análisis de Viabilidad</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-size:13px;color:#5a4a3a">Esfuerzo financiero</span>
+      <span style="font-size:15px;font-weight:700;color:${esfuerzo>40?'#c0392b':esfuerzo>30?'#e67e22':'#27ae60'}">${pct(esfuerzo)}</span>
+    </div>
+    <div class="viability-bar-bg">
+      <div class="viability-bar-fill" style="width:${Math.min(esfuerzo,100)}%;background:${barColor}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:10px;color:#b8a898">Óptimo &lt;30%</span>
+      <span style="font-size:10px;color:#b8a898">Límite 40%</span>
+    </div>
+    <div class="viability-result">
+      <div class="v-status">${viable}</div>
+      <div class="v-desc">${vDesc}</div>
+    </div>
+  `;
+
+  // Plazo comparison
+  let plazoRows = '';
+  [10,15,20,25,30].forEach(p => {
+    const c = (prestamo*rh)/(1-Math.pow(1+rh,-p*12));
+    const isCurrent = p===S.plazoHip;
+    plazoRows += `<div class="plazo-row${isCurrent?' current':''}">
+      <span style="font-size:13px;color:#5a4a3a">${p} años${isCurrent?'<span class="plazo-badge">actual</span>':''}</span>
+      <span style="font-size:13px;font-weight:700;color:#1a1209">${eur(c)}/mes</span>
+    </div>`;
+  });
+  document.getElementById('breakdown-plazo').innerHTML = `
+    <div class="breakdown-title">Comparativa de Plazos</div>${plazoRows}
+  `;
+}
+
+// ── TAB SWITCH ──
+function showTab(name) {
+  ['compra','alquiler','hipoteca'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===name?'flex':'none';
+    document.querySelectorAll('.tab').forEach((el,i) => {
+      const names=['compra','alquiler','hipoteca'];
+      el.classList.toggle('active', names[i]===name);
+    });
+  });
+}
+
+// ── FINANCING TOGGLE ──
+function toggleFinanciacion() {
+  S.financiado = !S.financiado;
+  const btn = document.getElementById('fin-toggle');
+  const thumb = document.getElementById('fin-thumb');
+  const fin = document.getElementById('sliders-financiacion');
+  btn.style.background = S.financiado ? 'linear-gradient(90deg,#c8a96e,#e8c97e)' : '#e5ddd2';
+  thumb.style.left = S.financiado ? '26px' : '4px';
+  fin.style.display = S.financiado ? 'block' : 'none';
+  recalc();
+}
+
+// ── SERVICE WORKER ──
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ── INIT ──
+renderSliders();
+recalc();
+</script>
+</body>
+</html>
